@@ -31,6 +31,8 @@
     PerspectiveCamera,
     WebGLRenderer,
     PlaneGeometry,
+    ExtrudeGeometry,
+    Shape,
     MeshStandardMaterial,
     TextureLoader,
     Mesh,
@@ -41,8 +43,10 @@
     Raycaster
   } = Three
 
-  const windows = {innerHeight: 600, innerWidth: 800}
+  
 
+  const windows = {innerHeight: 600, innerWidth: 800}
+  const heightForCam = 20;
   let legsHeight = 1;
   let gapFacade = 0.1;
   let sideDepth = .3;
@@ -50,7 +54,7 @@
 
   import boxes from './CasesListConfig.js'
 
-  const {boxAngularFloor, boxControl} = boxes
+  const {boxAngularFloor, boxControl, boxAngularTop} = boxes
 
   export default {
     props: {
@@ -124,9 +128,13 @@
           let b = g - a;
           let h = Math.sqrt(a * b);
           let h2 = Math.tan(threeMath.degToRad(90 - camAngle / 2)) * g / 2 + h / 2;
-
-          // vm.scene.rotation.y = threeMath.degToRad(90) - alfa;
-          // vm.scene.position.x = (a - b) / 2;
+          
+          vm.camera.rotation.x = threeMath.degToRad(45*2) - Math.atan(Math.sqrt(Math.pow(h2 + h,2) + Math.pow(heightForCam, 2)) / (h2 + h))*2 /*- threeMath.degToRad(18) */;
+          console.log( threeMath.radToDeg(vm.camera.rotation.x));
+          console.log('t ' +  threeMath.radToDeg(Math.atan(Math.sqrt(Math.pow(h2 + h,2) + Math.pow(heightForCam, 2)) / (h2 + h))));
+          vm.camera.position.y = 16;
+          vm.scene.rotation.y = threeMath.degToRad(90) - alfa;
+          vm.scene.position.x = (a - b) / 2;
           if (h2 > camZ) {
             vm.camera.position.z = h2;
           } else {
@@ -332,7 +340,7 @@
         }
 
         if (this.bottomLeft.length > 0 && !this.bottomAngularCaseExist) {
-          let angular = boxAngularFloor
+          let angular = boxAngularTop
           this.addAngularCaseBottom(angular)
         }
         body.rotation.y = threeMath.degToRad(-90)
@@ -354,7 +362,7 @@
         }
 
         if (this.bottomRight.length > 0 && !this.bottomAngularCaseExist) {
-          this.addAngularCaseBottom(boxAngularFloor)
+          this.addAngularCaseBottom(boxAngularTop)
         }
         body.rotation.y = threeMath.degToRad(0)
         const needDepth = this.bottomRight[0] ? this.bottomRight[0].userData.depth + gapFacade : 0
@@ -363,10 +371,11 @@
         body.userData.left = true
         body.userData.top = false
         this.scene.add(body)
+               
       },
       initWalls() {
-        let wallWidth = 60;
-        let wallHeight = 27;
+        let wallWidth = 60*2;
+        let wallHeight = 27*2;
         let wallGeometry = new PlaneGeometry(wallWidth, wallHeight);
         let floorGeometry = new PlaneGeometry(wallWidth, wallWidth);
         let floorMaterial = new MeshStandardMaterial({
@@ -394,14 +403,14 @@
         const wallR = new Mesh(wallGeometry, wallMaterial);
         const floor = new Mesh(floorGeometry, floorMaterial);
 
-        wall.material.normalMap.repeat.set(8, 4);
+        wall.material.normalMap.repeat.set(8*2, 4*2);
         wall.material.needsUpdate = true;
         wall.material.normalMap.wrapS = wall.material.normalMap.wrapT = RepeatWrapping;
         wall.name = "wall"
 
         wallR.name = "wallR"
 
-        floor.material.normalMap.repeat.set(3, 3);
+        floor.material.normalMap.repeat.set(4*2, 4 *2);
         floor.material.needsUpdate = true;
         floor.material.normalMap.wrapS = floor.material.normalMap.wrapT = RepeatWrapping;
 
@@ -483,24 +492,25 @@
 
       this.initWalls()
 
-      vm.camera.position.z = 80;
+      //vm.camera.position.z = 80;
 
       let spotLight = new SpotLight(0xffffff);
       spotLight.position.set(-60, 55, 60);
+      spotLight.target.position.set(-16, 10, 16);
       vm.scene.add(spotLight);
       vm.scene.add(spotLight.target);
 
 
       vm.addControlBoxes()
 
-      spotLight.target.position.set(-10, 10, 10);
+
 
       vm.selectCase()
 
       vm.scene.rotation.y = threeMath.degToRad(26);
 
-      vm.camera.position.set(-4, 16, 50);
-      vm.camera.rotation.x = threeMath.degToRad(-20);
+      //vm.camera.position.set(-4, 16, 50);
+      //vm.camera.rotation.x = threeMath.degToRad(-8);
 
       spotLight.intensity = 1.5
 
@@ -537,14 +547,17 @@
           const group = it.children.find(el => el.name === 'group')
           const leftDoor = group.children.find(el => el.name === 'leftDoor')
           const rightDoor = group.children.find(el => el.name === 'rightDoor')
+          const angDoor = group.children.find(el => el.name === 'angDoor')
           const {userData: {openedDoors}} = it
 
           if (openedDoors) {
             if (leftDoor) leftDoor.rotation.y = fromTo(leftDoor.rotation.y, 0, threeMath.degToRad(-90), threeMath.degToRad(2.5));
             if (rightDoor) rightDoor.rotation.y = fromTo(rightDoor.rotation.y, 0, threeMath.degToRad(90), threeMath.degToRad(2.5));
+            if (angDoor) angDoor.rotation.y = fromTo(angDoor.rotation.y, threeMath.degToRad(45), threeMath.degToRad(-60), threeMath.degToRad(2.5));
           } else {
             if (leftDoor) leftDoor.rotation.y = fromTo(leftDoor.rotation.y, threeMath.degToRad(-90), 0, threeMath.degToRad(2.5));
             if (rightDoor) rightDoor.rotation.y = fromTo(rightDoor.rotation.y, threeMath.degToRad(90), 0, threeMath.degToRad(2.5));
+            if (angDoor) angDoor.rotation.y = fromTo(angDoor.rotation.y, threeMath.degToRad(-60), threeMath.degToRad(45), threeMath.degToRad(2.5));
           }
         })
 
@@ -559,7 +572,9 @@
       }
 
       render();
+
     }
+    
   }
 </script>
 

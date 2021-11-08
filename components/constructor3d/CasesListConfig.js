@@ -1,7 +1,9 @@
-import {BoxGeometry, CylinderGeometry,
-  ShapeGeometry,
-  Math, Mesh, MeshBasicMaterial, MeshStandardMaterial, Color , Object3D, TextureLoader, Shape, DoubleSide, Group, MeshLambertMaterial, ExtrudeBufferGeometry} from "three";
+import {BoxGeometry, ExtrudeGeometry, CylinderGeometry,Vector2,
+  ShapeGeometry, Math, Mesh, MeshBasicMaterial, MeshStandardMaterial, Color , Object3D, TextureLoader, Shape, DoubleSide, Group, MeshLambertMaterial, ExtrudeBufferGeometry} from "three";
 import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader";
+
+const selectDepth = 0.1;
+
 
 const legsHeight = 1;
 const gapFacade = 0.1;
@@ -82,7 +84,7 @@ const boxControl = () => {
     f_rect( roundedRectShape, -15, -15, 30, 30, 10 );
 
     let material = new MeshLambertMaterial( { color: 0xffffff, side: DoubleSide } );
-    let extrudeSettings = { depth: 1, bevelEnabled: true, bevelSegments: 0, steps: 5, bevelSize: 2, bevelThickness: 2 };
+    let extrudeSettings = { depth: 0, bevelEnabled: false, bevelSegments: 0, steps: 5, bevelSize: 2, bevelThickness: 2 };
     let geometry = new ExtrudeBufferGeometry( roundedRectShape, extrudeSettings );
 
     let s = 0.1;
@@ -109,7 +111,7 @@ const boxControl = () => {
   buttonsGroup.add(addBtn)
   buttonsGroup.name='control'
 
-  buttonsGroup.scale.set( 0.8, 0.8, 0.8 )
+  buttonsGroup.scale.set( 1, 1, 1 )
   return buttonsGroup
 }
 
@@ -304,9 +306,188 @@ const boxAngularFloor = () => {
   return bodyCase
 }
 
+const boxAngularTop = () => {
+  let bodyWidth = 8;
+  let bodyHeight = 8;
+  let bodyDepth = 6;
+  let facadeK = 6;
+  let facadeWidth = 5;
+
+
+  let boxWidth = bodyWidth;
+  let boxHeight = bodyHeight; //- legsHeight;
+  let boxDepth = bodyDepth;
+
+  let gSideLR = new BoxGeometry(boxDepth, boxHeight, sideDepth);
+  let gSideBack = new BoxGeometry(boxWidth - sideDepth * 2, boxHeight, sideDepth);
+  let gSideBottom = new BoxGeometry(boxWidth - sideDepth * 2, boxDepth, sideDepth);
+  let gSideTop = new BoxGeometry(boxWidth - sideDepth * 2, sideTop, sideDepth);
+  let gFacade = new BoxGeometry(facadeWidth - gapFacade / 2, boxHeight, sideDepth);
+
+  let sideLeft = new Mesh(gSideLR, material);
+  let sideRight = new Mesh(gSideLR, material);
+  let sideBack = new Mesh(gSideBack, material);
+  let sideBottom = new Mesh(gSideBottom, material);
+  let sideShelf = new Mesh(gSideBottom, material);
+  let sideTopFront = new Mesh(gSideTop, material);
+  let sideTopBack = new Mesh(gSideTop, material);
+  let facedeLeft = new Mesh(gFacade, facadeMaterials);
+
+
+  let objFacedeLeft = new Object3D();
+  objFacedeLeft.add(facedeLeft);
+  facedeLeft.position.x = boxWidth - facadeWidth - sideDepth ;
+  //objFacedeLeft.position.x = boxWidth / 2 - facadeWidth - sideDepth;
+  //objFacedeLeft.position.z = boxDepth / 2 + sideDepth / 2;
+  objFacedeLeft.position.z = boxWidth / 2;
+  objFacedeLeft.position.x = boxDepth / 2 + sideDepth / 2;
+  objFacedeLeft.name = 'angDoor'
+
+  objFacedeLeft.rotation.y = Math.degToRad(45);
+
+  let group = new Mesh();
+  let bodyCase = new Mesh();
+
+  sideLeft.rotation.y = Math.degToRad(-90);
+  sideLeft.position.x = -(boxWidth / 2 - sideDepth / 2);
+  sideRight.rotation.y = Math.degToRad(90);
+  sideRight.position.x = (boxWidth / 2 - sideDepth / 2);
+  sideBack.position.z = -(boxDepth / 2 - sideDepth / 2);
+  sideBottom.rotation.x = Math.degToRad(-90);
+  sideShelf.rotation.x = Math.degToRad(-90);
+  sideBottom.position.y = -(boxHeight / 2 - sideDepth / 2);
+  sideTopFront.rotation.x = Math.degToRad(-90);
+  sideTopFront.position.y = (boxHeight / 2 - sideDepth / 2);
+  sideTopFront.position.z = (boxDepth / 2 - sideTop / 2);
+  sideTopBack.rotation.x = Math.degToRad(-90);
+  sideTopBack.position.y = (boxHeight / 2 - sideDepth / 2);
+  sideTopBack.position.z = (-boxDepth / 2 + sideTop / 2 + sideDepth)
+
+
+  group.add(sideLeft);
+  group.add(sideRight);
+  group.add(sideBack);
+  group.add(sideBottom);
+  group.add(sideShelf);
+  group.add(sideTopFront)
+  group.add(sideTopBack)
+  group.add(objFacedeLeft)
+  group.name = "group"
+
+  bodyCase.add(group);
+  /*bodyCase.add(legFront)
+  bodyCase.add(legFrontMini)
+  bodyCase.add(legLeft)*/
+  bodyCase.name = "bottomAngularBody"
+
+  group.position.y = legsHeight/2;
+  /*legFront.position.y = -bodyHeight / 2 + legsHeight;
+  legFront.position.z = bodyDepth / 2 - sideDepth / 2 - legFrontMargin;
+  legFrontMini.position.y = -bodyHeight / 2 + legsHeight;
+  legFrontMini.position.z = bodyDepth / 2 - sideDepth;
+  legFrontMini.position.x = boxWidth / 2 - facadeWidth - 0.65 - legFrontMargin;
+
+  legLeft.position.y = -bodyHeight / 2 + legsHeight;
+  legLeft.position.z = -bodyDepth / 2 + legsRad / 2 + legFrontMargin;
+  legLeft.position.x = -bodyWidth / 2 + legsRad + legFrontMargin;*/
+
+  bodyCase.userData.width = bodyWidth
+  bodyCase.userData.depth = bodyDepth
+  bodyCase.userData.height = bodyHeight
+  bodyCase.userData.padding = 3.5
+
+
+  bodyCase.position.set(0,0,0);
+
+  return bodyCase
+}
+
+const boxStandartTop = () => {
+  let bodyWidth = 8;
+  let bodyHeight = 10;
+  let bodyDepth = 6;
+
+  let boxWidth = bodyWidth;
+  let boxHeight = bodyHeight; //- legsHeight;
+  let boxDepth = bodyDepth;
+
+  let gSideLR = new BoxGeometry(boxDepth, boxHeight, sideDepth);
+  let gSideBack = new BoxGeometry(boxWidth - sideDepth * 2, boxHeight, sideDepth);
+  let gSideBottom = new BoxGeometry(boxWidth - sideDepth * 2, boxDepth, sideDepth);
+  let gSideTop = new BoxGeometry(boxWidth - sideDepth * 2, sideTop, sideDepth);
+  let gFacade = new BoxGeometry(boxWidth / 2 - gapFacade / 2, boxHeight, sideDepth);
+
+  let sideLeft = new Mesh(gSideLR, material);
+  let sideRight = new Mesh(gSideLR, material);
+  let sideBack = new Mesh(gSideBack, material);
+  let sideBottom = new Mesh(gSideBottom, material);
+  let sideShelf = new Mesh(gSideBottom, material);
+  let sideTopFront = new Mesh(gSideTop, material);
+  let sideTopBack = new Mesh(gSideTop, material);
+  let facedeLeft = new Mesh(gFacade, facadeMaterials);
+  let facedeRight = new Mesh(gFacade, facadeMaterials);
+
+  let objFacedeLeft = new Object3D();
+  objFacedeLeft.add(facedeLeft);
+  facedeLeft.position.x = boxWidth / 4 - sideDepth / 2;
+  objFacedeLeft.position.x = -boxWidth / 2 + sideDepth / 2;
+  objFacedeLeft.position.z = boxDepth / 2 + sideDepth / 2;
+  objFacedeLeft.name = 'leftDoor'
+
+  let objFacedeRight = new Object3D();
+  objFacedeRight.add(facedeRight);
+  facedeRight.position.x = -boxWidth / 4 + sideDepth / 2;
+  objFacedeRight.position.x = boxWidth / 2 - sideDepth / 2;
+  objFacedeRight.position.z = boxDepth / 2 + sideDepth / 2;
+  objFacedeRight.name = 'rightDoor'
+
+  let group = new Mesh();
+  let bodyCase = new Mesh();
+
+  sideLeft.rotation.y = Math.degToRad(-90);
+  sideLeft.position.x = -(boxWidth / 2 - sideDepth / 2);
+  sideRight.rotation.y = Math.degToRad(90);
+  sideRight.position.x = (boxWidth / 2 - sideDepth / 2);
+  sideBack.position.z = -(boxDepth / 2 - sideDepth / 2);
+  sideBottom.rotation.x = Math.degToRad(-90);
+  sideShelf.rotation.x = Math.degToRad(-90);
+  sideBottom.position.y = -(boxHeight / 2 - sideDepth / 2);
+  sideTopFront.rotation.x = Math.degToRad(-90);
+  sideTopFront.position.y = (boxHeight / 2 - sideDepth / 2);
+  sideTopFront.position.z = (boxDepth / 2 - sideTop / 2);
+  sideTopBack.rotation.x = Math.degToRad(-90);
+  sideTopBack.position.y = (boxHeight / 2 - sideDepth / 2);
+  sideTopBack.position.z = (-boxDepth / 2 + sideTop / 2 + sideDepth);
+
+  group.add(sideLeft);
+  group.add(sideRight);
+  group.add(sideBack);
+  group.add(sideBottom);
+  group.add(sideShelf);
+  group.add(sideTopFront)
+  group.add(sideTopBack)
+  group.add(objFacedeLeft)
+  group.add(objFacedeRight)
+  group.name = "group"
+
+  bodyCase.add(group);
+  bodyCase.name = "body"
+
+  group.position.y = legsHeight/2;
+
+
+  bodyCase.userData.width = bodyWidth
+  bodyCase.userData.depth = bodyDepth
+  bodyCase.userData.height = bodyHeight
+  bodyCase.position.set(0,0,0);
+
+  return bodyCase
+}
 
 export default {
   boxStandardFloor: boxStandardFloor(),
   boxAngularFloor: boxAngularFloor(),
+  boxAngularTop: boxAngularTop(),
+  boxStandartTop: boxStandartTop(),
   boxControl: boxControl()
 }
